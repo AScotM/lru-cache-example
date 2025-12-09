@@ -1,14 +1,34 @@
 <?php
 
+class Node 
+{
+    public int $key;
+    public int $value;
+    public ?Node $prev;
+    public ?Node $next;
+
+    public function __construct(int $key, int $value) 
+    {
+        $this->key = $key;
+        $this->value = $value;
+        $this->prev = null;
+        $this->next = null;
+    }
+}
+
 class LRUCache 
 {
     private int $capacity;
     private array $map;
-    private ?Node $head;
-    private ?Node $tail;
+    private Node $head;
+    private Node $tail;
 
     public function __construct(int $capacity) 
     {
+        if ($capacity <= 0) {
+            throw new InvalidArgumentException("Capacity must be greater than 0");
+        }
+        
         $this->capacity = $capacity;
         $this->map = [];
         $this->head = new Node(0, 0);
@@ -44,6 +64,9 @@ class LRUCache
             $lruNode = $this->tail->prev;
             $this->removeNode($lruNode);
             unset($this->map[$lruNode->key]);
+            // Help garbage collection
+            $lruNode->prev = null;
+            $lruNode->next = null;
         }
 
         $newNode = new Node($key, $value);
@@ -57,6 +80,10 @@ class LRUCache
         $next = $node->next;
         $prev->next = $next;
         $next->prev = $prev;
+        
+        // Clean up references to help with garbage collection
+        $node->prev = null;
+        $node->next = null;
     }
 
     private function addToFront(Node $node): void 
@@ -81,25 +108,10 @@ class LRUCache
         
         return [
             'capacity' => $this->capacity,
+            'size' => count($this->map),
             'items' => $items,
             'order' => $order
         ];
-    }
-}
-
-class Node 
-{
-    public int $key;
-    public int $value;
-    public ?Node $prev;
-    public ?Node $next;
-
-    public function __construct(int $key, int $value) 
-    {
-        $this->key = $key;
-        $this->value = $value;
-        $this->prev = null;
-        $this->next = null;
     }
 }
 
@@ -128,4 +140,3 @@ echo "Get(3): " . $cache->get(3) . "\n";
 echo "Get(4): " . $cache->get(4) . "\n";
 
 echo "\n=== Demo Complete ===\n";
-?>
